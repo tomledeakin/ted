@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.utils.data as data
 import wandb
-
+wandb.login(key="e09f73bb0df882dd4606253c95e1bc68801828a0")
 from collections import Counter
 from pyod.models.pca import PCA
 from sklearn import metrics
@@ -34,16 +34,15 @@ os.makedirs("visualization", exist_ok=True)
 
 # Initialize argparse Namespace
 opt = argparse.Namespace()
-opt.dataset = "mnist"
-opt.device = "cpu"  # Use CPU if GPU memory is insufficient
+opt.dataset = "cifar10"
+opt.device = "cuda" if torch.cuda.is_available() else "cpu"
 opt.batch_size = 100
 opt.data_root = "../data/"
 opt.target = 0
 opt.attack_mode = "SSDT"
 
 # Initialize Weights and Biases
-wandb.init(project="TED", name=f"{opt.dataset}_k_{opt.target}", config=opt)
-
+wandb.init(project="TED", name=f"{opt.dataset}_k_{opt.target}", config=vars(opt))
 
 def load_model():
     # Load model based on dataset
@@ -60,7 +59,6 @@ def load_model():
     else:
         raise ValueError(f"Unknown dataset: {opt.dataset}")
 
-
 def load_state(model, state_dict):
     # Load model state
     model.load_state_dict(state_dict)
@@ -69,13 +67,11 @@ def load_state(model, state_dict):
     model.requires_grad_(False)
     return model
 
-
 def load_model_state():
     # Load saved model checkpoint
     base_path = './checkpoints/'
     model_path = f"{base_path}{opt.dataset}/SSDT/target_{opt.target}/SSDT_{opt.dataset}_ckpt.pth.tar"
     return torch.load(model_path, map_location=opt.device)
-
 
 # Set input dimensions based on dataset
 if opt.dataset in ["cifar10", "gtsrb"]:
@@ -180,7 +176,6 @@ temp_cleanT_inputs_set = []
 temp_cleanT_labels_set = []
 temp_cleanT_pred_set = []
 
-
 def create_bd(netG, netM, inputs):
     # Create backdoor inputs
     patterns = netG(inputs)
@@ -189,12 +184,10 @@ def create_bd(netG, netM, inputs):
     bd_inputs = inputs + (patterns - inputs) * masks_output
     return bd_inputs
 
-
 def create_targets(targets, opt, label):
     # Create new targets
     new_targets = torch.ones_like(targets) * label
     return new_targets.to(opt.device)
-
 
 # Generate VT and NVT sets
 while vt_count < UNKNOWN_SIZE_POSITIVE or nvt_count < UNKNOWN_SIZE_NEGATIVE:
@@ -258,7 +251,6 @@ benign_inputs_set = torch.concatenate(benign_inputs_set)
 benign_labels_set = np.concatenate(benign_labels_set)
 benign_pred_set = np.concatenate(benign_pred_set)
 
-
 class CustomDataset(data.Dataset):
     def __init__(self, data, labels):
         super(CustomDataset, self).__init__()
@@ -272,7 +264,6 @@ class CustomDataset(data.Dataset):
         img = self.images[index]
         label = self.labels[index]
         return img, label
-
 
 bd_set = CustomDataset(data=bd_inputs_set, labels=bd_labels_set)
 bd_loader = torch.utils.data.DataLoader(bd_set, batch_size=opt.batch_size, num_workers=0, shuffle=True)
@@ -288,7 +279,6 @@ benign_set = CustomDataset(data=benign_inputs_set, labels=benign_labels_set)
 benign_loader = torch.utils.data.DataLoader(benign_set, batch_size=opt.batch_size, num_workers=0, shuffle=True)
 print("NoT set size:", len(benign_loader))
 del benign_inputs_set, benign_labels_set, benign_pred_set
-
 
 def display_images_grid(images, predictions, title_prefix):
     # Display a grid of images
@@ -312,15 +302,14 @@ def display_images_grid(images, predictions, title_prefix):
         plt.axis('off')
 
     plt.tight_layout()
-    # Save figure
-    plt.savefig("visualization/display_images_grid.png")
+    save_fig_path = "visualization/display_images_grid.png"
+    # Just saving as PNG is fine with matplotlib, no kaleido needed
+    plt.savefig(save_fig_path)
     plt.show()
-
 
 images_to_display = []
 predictions_to_display = []
 
-# Collect a few images from bd_loader and cleanT_loader
 for loader, limit in [(bd_loader, 3), (cleanT_loader, 9)]:
     for inputs, labels in loader:
         inputs = inputs.to(opt.device)
@@ -342,15 +331,11 @@ del images_to_display, predictions_to_display
 hook_handle = []
 activations = {}
 
-
 def get_activation(name):
     def hook(model, input, output):
         activations[name] = output.detach()
-
     return hook
 
-
-# Remove existing hooks if any
 for handle in hook_handle:
     handle.remove()
 
@@ -368,29 +353,25 @@ for _, child in enumerate(net_children):
 
     if isinstance(child, nn.ReLU):
         hook_handle.append(child.register_forward_hook(get_activation("Relu_" + str(index))))
-        index = index + 1
+        index += 1
 
     if isinstance(child, nn.Linear):
         hook_handle.append(child.register_forward_hook(get_activation("Linear_" + str(index))))
-        index = index + 1
-
+        index += 1
 
 def fetch_activation(model, device, loader, activations):
-    # Fetch activations from specified layers
     model.eval()
     all_h_label = []
     pred_set = []
     h_batch = {}
     activation_container = {}
 
-    # Initialize activation_container keys
     for batch_idx, (images, labels) in enumerate(loader, start=1):
         model(images.to(device))
         for key in activations:
             activation_container[key] = []
         break
 
-    # Actual fetching
     for batch_idx, (images, labels) in enumerate(loader, start=1):
         output = model(images.to(device))
         pred_set.append(torch.argmax(output, -1).to(device))
@@ -411,15 +392,10 @@ def fetch_activation(model, device, loader, activations):
 
     return all_h_label, activation_container, pred_set
 
-
 h_bd_ori_labels, h_bd_activations, h_bd_preds = fetch_activation(model, opt.device, bd_loader, activations)
-h_benign_ori_labels, h_benign_activations, h_benign_preds = fetch_activation(model, opt.device, benign_loader,
-                                                                             activations)
-h_cleanT_ori_labels, h_cleanT_activations, h_cleanT_preds = fetch_activation(model, opt.device, cleanT_loader,
-                                                                             activations)
-h_defense_ori_labels, h_defense_activations, h_defense_preds = fetch_activation(model, opt.device, defense_loader,
-                                                                                activations)
-
+h_benign_ori_labels, h_benign_activations, h_benign_preds = fetch_activation(model, opt.device, benign_loader, activations)
+h_cleanT_ori_labels, h_cleanT_activations, h_cleanT_preds = fetch_activation(model, opt.device, cleanT_loader, activations)
+h_defense_ori_labels, h_defense_activations, h_defense_preds = fetch_activation(model, opt.device, defense_loader, activations)
 
 def calculate_accuracy(ori_labels, preds):
     correct = torch.sum(ori_labels == preds)
@@ -427,13 +403,11 @@ def calculate_accuracy(ori_labels, preds):
     accuracy = (correct / total) * 100
     return accuracy
 
-
 accuracy_defense = calculate_accuracy(h_defense_ori_labels, h_defense_preds)
 accuracy_VT = calculate_accuracy(opt.target * torch.ones_like(h_bd_preds), h_bd_preds)
 
 print(f"Accuracy on defense_loader: {accuracy_defense}%")
 print(f"Accuracy on bd_loader: {accuracy_VT}%")
-
 
 def plot_activations(activations, labels, title):
     # Plot UMAP for given activations
@@ -446,10 +420,10 @@ def plot_activations(activations, labels, title):
     )
     fig.update_layout(title=title)
 
-    # Save figure
-    fig.write_image(f"visualization/{title.replace(' ', '_')}.png")
+    # Save as HTML instead of image
+    html_path = f"visualization/{title.replace(' ', '_')}.html"
+    fig.write_html(html_path, include_plotlyjs='cdn')
     fig.show()
-
 
 sample_rate = 0.2
 total_bd = len(h_bd_activations[next(iter(h_bd_activations))])
@@ -472,9 +446,7 @@ if print_umat:
 
         plot_activations(activations_concat, labels_concat, title=f"UMAP for {key}")
 
-
 def gather_activation_into_class(target, h):
-    # Group activations by class
     h_c_c = [0 for _ in range(Test_C)]
     for c in range(Test_C):
         idxs = (target == c).nonzero(as_tuple=True)[0]
@@ -484,17 +456,15 @@ def gather_activation_into_class(target, h):
         h_c_c[c] = h_c
     return h_c_c
 
-
 def get_dis_sort(item, destinations):
-    # Sort distances between one item and all destination points
     item = torch.reshape(item, (1, item.shape[0]))
-    new_dis = pairwise_euclidean_distance(item.to("cuda"), destinations.to("cuda"))
+    item = item.to(opt.device)
+    destinations = destinations.to(opt.device)
+    new_dis = pairwise_euclidean_distance(item, destinations)
     _, indices_individual = torch.sort(new_dis)
     return indices_individual.to("cpu")
 
-
 def getDefenseRegion(final_prediction, h_defense_activation, processing_label, layer, layer_test_region_individual):
-    # Compute topological representation for defense samples
     r_layer = h_defense_activation
     if layer not in layer_test_region_individual:
         layer_test_region_individual[layer] = {}
@@ -515,11 +485,9 @@ def getDefenseRegion(final_prediction, h_defense_activation, processing_label, l
 
     return layer_test_region_individual
 
-
 def getLayerRegionDistance(new_prediction, new_activation, new_temp_label,
                            h_defense_prediction, h_defense_activation,
                            layer, layer_test_region_individual):
-    # Compute topological representation for new predictions (VT, NVT)
     r_layer = h_defense_activation
     labels = torch.unique(new_prediction)
     candidate_ = gather_activation_into_class(new_prediction, new_activation)
@@ -537,7 +505,6 @@ def getLayerRegionDistance(new_prediction, new_activation, new_temp_label,
                 layer_test_region_individual[layer][new_temp_label].append(itemindex)
 
     return layer_test_region_individual
-
 
 class_names = np.unique(h_defense_ori_labels.cpu().numpy())
 
@@ -593,9 +560,7 @@ print(wandb.save(file_path))
 with open(file_path, 'rb') as file:
     topological_representation = pickle.load(file)
 
-
 def aggregate_by_all_layers(output_label):
-    # Aggregate topological representation across all layers
     inputs_container = []
     first_key = list(topological_representation.keys())[0]
     labels_container = np.repeat(output_label, len(topological_representation[first_key][output_label]))
@@ -607,7 +572,6 @@ def aggregate_by_all_layers(output_label):
             inputs_container.append(np.array(temp))
 
     return np.array(inputs_container).T, np.array(labels_container)
-
 
 inputs_all_benign = []
 labels_all_benign = []
@@ -644,7 +608,10 @@ fig_ = px.scatter(
     trajectories, x=0, y=1, color=df_classes[0].astype(str), labels={'color': 'digit'},
     color_discrete_sequence=px.colors.qualitative.Dark24,
 )
-fig_.write_image("visualization/pca_scatter.png")
+
+# Save PCA figure as HTML
+pca_html_path = "visualization/pca_scatter.html"
+fig_.write_html(pca_html_path, include_plotlyjs='cdn')
 fig_.show()
 
 pca = PCA(contamination=0.01, n_components='mle')
@@ -675,7 +642,6 @@ print("True Negatives (TN):", tn)
 print("False Negatives (FN):", fn)
 
 import plotly.graph_objects as go
-import plotly.io as pio
 
 inputs = inputs_all_unknown
 labels = labels_all_unknown
@@ -709,7 +675,6 @@ fill_color_map = {
     'NVT': '#fd9300'
 }
 
-# Create box plot for topological persistence diagram
 for label in ['NoT', 'NVT', 'VT']:
     data = df[df['z'] == label]
     fig.add_trace(go.Box(
@@ -742,7 +707,6 @@ fig.update_layout(
 )
 
 fig.update_yaxes(range=[0, y_max])
-save_format = "pdf"
 fig.update_layout({
     'plot_bgcolor': 'rgba(0, 0, 0, 0)',
     'paper_bgcolor': 'rgba(0, 0, 0, 0)',
@@ -782,14 +746,13 @@ fig.update_layout(
         bordercolor="Black",
         borderwidth=0
     ),
-
     boxmode='group'
 )
 
-# Save final figure
-save_path = f"visualization/{opt.dataset}_k_{opt.target}_{opt.attack_mode}_topology_persistence_diagram.pdf"
-pio.write_image(fig, save_path, format=save_format)
-wandb.save(save_path)
-
+# Save final figure as HTML
+topology_html_path = f"visualization/{opt.dataset}_k_{opt.target}_{opt.attack_mode}_topology_persistence_diagram.html"
+fig.write_html(topology_html_path, include_plotlyjs='cdn')
 fig.show()
+
 wandb.finish()
+

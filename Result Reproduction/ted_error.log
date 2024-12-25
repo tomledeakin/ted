@@ -1,0 +1,32 @@
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: Currently logged in as: tomledeakin (tomledeakin-deakin-university). Use `wandb login --relogin` to force relogin
+wandb: Appending key for api.wandb.ai to your netrc file: /home/s222576762/.netrc
+wandb: WARNING Changes to your `wandb` environment variables will be ignored because your `wandb` session has already started. For more information on how to modify your settings with `wandb.init()` arguments, please refer to https://wandb.me/wandb-init.
+wandb: Tracking run with wandb version 0.18.6
+wandb: Run data is saved locally in /home/s222576762/TED Research/ted/wandb/run-20241213_114456-qd1zmtxj
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run cifar10_k_0
+wandb: ⭐️ View project at https://wandb.ai/tomledeakin-deakin-university/TED
+wandb: 🚀 View run at https://wandb.ai/tomledeakin-deakin-university/TED/runs/qd1zmtxj
+/home/s222576762/TED Research/ted/TED_nv.py:66: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  return torch.load(model_path, map_location=opt.device)
+wandb:                                                                                
+wandb: 🚀 View run cifar10_k_0 at: https://wandb.ai/tomledeakin-deakin-university/TED/runs/qd1zmtxj
+wandb: ⭐️ View project at: https://wandb.ai/tomledeakin-deakin-university/TED
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20241213_114456-qd1zmtxj/logs
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: Currently logged in as: tomledeakin (tomledeakin-deakin-university). Use `wandb login --relogin` to force relogin
+wandb: Appending key for api.wandb.ai to your netrc file: /home/s222576762/.netrc
+wandb: WARNING Changes to your `wandb` environment variables will be ignored because your `wandb` session has already started. For more information on how to modify your settings with `wandb.init()` arguments, please refer to https://wandb.me/wandb-init.
+wandb: Tracking run with wandb version 0.18.6
+wandb: Run data is saved locally in /home/s222576762/TED Research/ted/wandb/run-20241213_114540-tblt2ebn
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run cifar10_k_0
+wandb: ⭐️ View project at https://wandb.ai/tomledeakin-deakin-university/TED
+wandb: 🚀 View run at https://wandb.ai/tomledeakin-deakin-university/TED/runs/tblt2ebn
+/home/s222576762/TED Research/ted/TED.py:69: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  return torch.load(model_path, map_location=opt.device)
+/home/s222576762/BackdoorBox Research/backdoor-toolbox/my_env/lib/python3.12/site-packages/umap/umap_.py:1952: UserWarning: n_jobs value 1 overridden to 1 by setting random_state. Use no seed for parallelism.
+  warn(
+slurmstepd-radagast: error: *** JOB 658378 ON radagast CANCELLED AT 2024-12-14T18:08:42 ***

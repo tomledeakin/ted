@@ -11,7 +11,7 @@ from networks.models import Generator, NetC_MNIST
 from torch.utils.tensorboard import SummaryWriter
 from utils import progress_bar
 import wandb
-
+wandb.login(key="e09f73bb0df882dd4606253c95e1bc68801828a0")
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 

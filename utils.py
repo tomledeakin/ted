@@ -1,4 +1,5 @@
-"""Some helper functions for PyTorch, including:
+"""
+Some helper functions for PyTorch, including:
     - get_mean_and_std: calculate the mean and std value of dataset.
     - msr_init: net parameter initialization.
     - progress_bar: progress bar mimic xlua.progress.
@@ -33,22 +34,32 @@ def init_params(net):
     """Init layer parameters."""
     for m in net.modules():
         if isinstance(m, nn.Conv2d):
-            init.kaiming_normal(m.weight, mode="fan_out")
-            if m.bias:
-                init.constant(m.bias, 0)
+            init.kaiming_normal_(m.weight, mode="fan_out")
+            if m.bias is not None:
+                init.constant_(m.bias, 0)
         elif isinstance(m, nn.BatchNorm2d):
-            init.constant(m.weight, 1)
-            init.constant(m.bias, 0)
+            init.constant_(m.weight, 1)
+            init.constant_(m.bias, 0)
         elif isinstance(m, nn.Linear):
-            init.normal(m.weight, std=1e-3)
-            if m.bias:
-                init.constant(m.bias, 0)
+            init.normal_(m.weight, std=1e-3)
+            if m.bias is not None:
+                init.constant_(m.bias, 0)
 
-if platform.system() == 'Windows':
-    term_width = 100
-else:
-    _, term_width = os.popen("stty size", "r").read().split()
-    term_width = int(term_width)
+
+# Handle terminal width for Slurm or non-terminal environments
+def get_terminal_width():
+    try:
+        # Try to get the terminal width
+        if platform.system() == 'Windows':
+            return 100
+        else:
+            _, term_width = os.popen("stty size", "r").read().split()
+            return int(term_width)
+    except:
+        # Default to 100 if no terminal is available
+        return 100
+
+term_width = get_terminal_width()
 
 TOTAL_BAR_LENGTH = 65.0
 last_time = time.time()
@@ -128,3 +139,4 @@ def format_time(seconds):
     if f == "":
         f = "0ms"
     return f
+

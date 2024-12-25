@@ -1,0 +1,21 @@
+torch.cuda.is_available(): True
+Running on device: cuda
+Loading model...
+Model loaded and state dict applied.
+Loading dataset...
+Files already downloaded and verified
+Dataset loaded.
+Identifying benign samples in defense subset...
+Generating VT and NVT sets...
+Processing NoT samples...
+Fetching final predictions for evaluation...
+Performance of defense method:
+Label VT: 400
+Label NoT: 200
+AUC: 0.563275
+TPR: 1.0
+True Positives (TP): 400
+False Positives (FP): 200
+True Negatives (TN): 0
+False Negatives (FN): 0
+Done.
